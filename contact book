@@ -1,0 +1,115 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+
+# File to store contacts
+CONTACTS_FILE = "contacts.json"
+
+# Load contacts from file
+def load_contacts():
+    try:
+        with open(CONTACTS_FILE, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+# Save contacts to file
+def save_contacts(contacts):
+    with open(CONTACTS_FILE, "w") as file:
+        json.dump(contacts, file, indent=4)
+
+# Add a new contact
+def add_contact():
+    name = name_entry.get()
+    phone = phone_entry.get()
+    email = email_entry.get()
+    address = address_entry.get()
+    
+    if not name or not phone:
+        messagebox.showwarning("Input Error", "Name and Phone are required!")
+        return
+    
+    contacts.append({"name": name, "phone": phone, "email": email, "address": address})
+    save_contacts(contacts)
+    update_contact_list()
+    clear_fields()
+    messagebox.showinfo("Success", "Contact added successfully!")
+
+# Update contact list display
+def update_contact_list():
+    contact_list.delete(0, tk.END)
+    for contact in contacts:
+        contact_list.insert(tk.END, f"{contact['name']} - {contact['phone']}")
+
+# Search contacts
+def search_contact():
+    query = search_entry.get().lower()
+    contact_list.delete(0, tk.END)
+    for contact in contacts:
+        if query in contact['name'].lower() or query in contact['phone']:
+            contact_list.insert(tk.END, f"{contact['name']} - {contact['phone']}")
+
+# Delete a selected contact
+def delete_contact():
+    selected = contact_list.curselection()
+    if not selected:
+        messagebox.showwarning("Selection Error", "Please select a contact to delete.")
+        return
+    
+    index = selected[0]
+    del contacts[index]
+    save_contacts(contacts)
+    update_contact_list()
+    messagebox.showinfo("Success", "Contact deleted successfully!")
+
+# Clear input fields
+def clear_fields():
+    name_entry.delete(0, tk.END)
+    phone_entry.delete(0, tk.END)
+    email_entry.delete(0, tk.END)
+    address_entry.delete(0, tk.END)
+
+# Load contacts initially
+contacts = load_contacts()
+
+# Create main window
+root = tk.Tk()
+root.title("Contact Book")
+root.geometry("400x500")
+
+# Input fields
+frame = tk.Frame(root)
+frame.pack(pady=10)
+
+tk.Label(frame, text="Name:").grid(row=0, column=0)
+name_entry = tk.Entry(frame)
+name_entry.grid(row=0, column=1)
+
+tk.Label(frame, text="Phone:").grid(row=1, column=0)
+phone_entry = tk.Entry(frame)
+phone_entry.grid(row=1, column=1)
+
+tk.Label(frame, text="Email:").grid(row=2, column=0)
+email_entry = tk.Entry(frame)
+email_entry.grid(row=2, column=1)
+
+tk.Label(frame, text="Address:").grid(row=3, column=0)
+address_entry = tk.Entry(frame)
+address_entry.grid(row=3, column=1)
+
+# Buttons
+tk.Button(root, text="Add Contact", command=add_contact).pack(pady=5)
+tk.Button(root, text="Delete Contact", command=delete_contact).pack(pady=5)
+
+tk.Label(root, text="Search:").pack()
+search_entry = tk.Entry(root)
+search_entry.pack()
+tk.Button(root, text="Search", command=search_contact).pack(pady=5)
+
+# Contact list display
+contact_list = tk.Listbox(root, width=50, height=10)
+contact_list.pack(pady=10)
+update_contact_list()
+
+# Run the application
+root.mainloop()
